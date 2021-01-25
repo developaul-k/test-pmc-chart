@@ -1,0 +1,5 @@
+node_modules/
+www/dist/
+db/*
+!db/creator_migrate
+i18next.config.js
