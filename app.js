@@ -1,6 +1,5 @@
 import axios from 'axios';
 import express from 'express';
-import querystring from 'querystring';
 import { go, map, omit, pick, strMap } from 'fxjs';
 const app = express();
 const port = 80;
@@ -43,34 +42,36 @@ app.get('/', async (req, res, next) => {
       );
     }
 
-    const { data } = await axios.get(`${STRAVA_API}/activities`, {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-      params: {
-        include_all_efforts: true,
-      },
-    });
-
-    res.send(
-      access_token
-        ? `
-    <div>
-        <p>connected strava</p>
-        <ul>
-            ${strMap(
-              ({ name, average_watts, weighted_average_watts }) =>
-                `<li>${name}</br>평균파워: ${average_watts}, NP: ${weighted_average_watts}</li>`,
-              data,
-            )}
-        </ul>
-    </div>
-  `
-        : `
-    <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID}&response_type=code&redirect_uri=http://localhost/api/oauth&approval_prompt=force&scope=read,read_all,profile:read_all,profile:write,activity:read,activity:read_all,activity:write">
-      Connect Starava
-    </a>
-  `,
+    await go(
+      axios.get(`${STRAVA_API}/activities`, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+        params: {
+          include_all_efforts: true,
+        },
+      }),
+      ({ data }) =>
+        res.send(
+          access_token
+            ? `
+                <div>
+                    <p>connected strava</p>
+                    <ul>
+                        ${strMap(
+                          ({ name, average_watts, weighted_average_watts }) =>
+                            `<li>${name}</br>평균파워: ${average_watts}, NP: ${weighted_average_watts}</li>`,
+                          data,
+                        )}
+                    </ul>
+                </div>
+              `
+            : `
+              <a href="https://www.strava.com/oauth/authorize?client_id=${process.env.STRAVA_CLIENT_ID}&response_type=code&redirect_uri=http://localhost/api/oauth&approval_prompt=force&scope=read,read_all,profile:read_all,profile:write,activity:read,activity:read_all,activity:write">
+                Connect Starava
+              </a>
+            `,
+        ),
     );
   } catch (err) {
     console.log(err.response?.data);
